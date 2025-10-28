@@ -3,9 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card"
 import { Button } from "./components/ui/button"
 import { Input } from "./components/ui/input"
 import { ScrollArea } from "./components/ui/scroll-area"
-import { Settings, MessagesSquare, Ticket, Laptop, Smartphone, UserCircle2, AlertTriangle, XCircle, Search, Pin, Play, Loader2, BookOpen, Layers, FileText, CheckCircle2, Circle, Clock3, Mic, BadgeCheck, Bot, Wallet, ClipboardList, Plane, CalendarDays, ChevronDown, ChevronUp, ChevronRight } from "lucide-react"
+import { Settings, MessagesSquare, Ticket, Laptop, Smartphone, UserCircle2, AlertTriangle, XCircle, X, Search, Pin, Play, Loader2, BookOpen, Layers, FileText, CheckCircle2, Circle, Clock3, Mic, BadgeCheck, Bot, Wallet, ClipboardList, Plane, CalendarDays, ChevronDown, ChevronUp, ChevronRight } from "lucide-react"
 
 const AGENT_CLUSTER_KEYWORDS = ['Zoom', 'Outlook', 'VDI', 'Password Reset', 'VPN', 'Teams', 'Hardware', 'Device', 'Endpoint', 'Service Request']
+const DEFAULT_TICKET_CATEGORY = 'General'
+const DEFAULT_TICKET_PRIORITY = 'P3'
+
+function createBlankTicketForm(){
+  return {
+    subject: '',
+    details: '',
+    category: DEFAULT_TICKET_CATEGORY,
+    priority: DEFAULT_TICKET_PRIORITY
+  }
+}
 
 // Mock data with tickets, devices, suggestions, trainings
 function useMockData() {
@@ -1616,6 +1627,23 @@ function EndUserPortal(){
   const [activeRun, setActiveRun] = useState(null)
   const [runLog, setRunLog] = useState([])
   const runTimersRef = useRef([])
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false)
+  const [ticketForm, setTicketForm] = useState(createBlankTicketForm)
+  const [ticketError, setTicketError] = useState('')
+  const [activeSuggestion, setActiveSuggestion] = useState(null)
+
+  useEffect(() => {
+    if (!ticketDialogOpen) return
+
+    function handleKeyDown(event){
+      if (event.key === 'Escape'){
+        closeTicketDialog()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [ticketDialogOpen])
 
   useEffect(() => {
     return () => {
@@ -1623,8 +1651,70 @@ function EndUserPortal(){
     }
   }, [])
 
+  const ticketCategories = ['General', 'Hardware', 'Software', 'Access', 'Network', 'Other']
+  const priorityOptions = ['P1', 'P2', 'P3', 'P4']
+
+  function closeTicketDialog(){
+    setTicketDialogOpen(false)
+    setTicketError('')
+    setActiveSuggestion(null)
+    setTicketForm(createBlankTicketForm())
+  }
+
   function openTicket(s){
-    alert(`Ticket opened: ${s.title}`)
+    setActiveSuggestion(s || null)
+    setTicketError('')
+    setTicketForm(prev => ({
+      ...createBlankTicketForm(),
+      subject: s?.title || prev.subject || '',
+      details: s?.recommendation || prev.details || ''
+    }))
+    setTicketDialogOpen(true)
+  }
+
+  function formatDateTime(date){
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}`
+  }
+
+  function generateTicketId(){
+    const random = Math.floor(100000 + Math.random() * 900000)
+    return `INC-${random}`
+  }
+
+  function handleTicketSubmit(event){
+    event.preventDefault()
+    const subject = ticketForm.subject.trim()
+    const details = ticketForm.details.trim()
+
+    if (!subject || !details){
+      setTicketError('Please provide both a subject and a detailed description to raise a ticket.')
+      return
+    }
+
+    const now = new Date()
+    const expectedCompletion = new Date(now.getTime() + 4 * 60 * 60 * 1000)
+
+    const newTicket = {
+      id: generateTicketId(),
+      user: 'anuj@org.com',
+      title: subject,
+      service: ticketForm.category || DEFAULT_TICKET_CATEGORY,
+      priority: ticketForm.priority || DEFAULT_TICKET_PRIORITY,
+      vip: false,
+      assignedTo: 'IT Service Desk',
+      openDate: formatDateTime(now),
+      expectedCompletion: formatDateTime(expectedCompletion),
+      timeline: ['Opened'],
+      resolutionHints: []
+    }
+
+    setTicketList(prev => [newTicket, ...prev])
+    closeTicketDialog()
   }
 
   function closeTicket(ticket){
@@ -1676,8 +1766,9 @@ function EndUserPortal(){
   const filteredWorkflows = workflowList.filter(w=>w.title.toLowerCase().includes(search.toLowerCase()) && (!search || !w.pinned))
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1.8fr)_420px] gap-4 items-start w-full">
-      <div className="space-y-3">
+    <>
+      <div className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1.8fr)_420px] gap-4 items-start w-full">
+        <div className="space-y-3">
         <SectionTitle icon={Search} title="Search Workflows" />
         <Input placeholder="Search workflows..." value={search} onChange={e=>setSearch(e.target.value)} />
         {search && (
@@ -1700,12 +1791,12 @@ function EndUserPortal(){
           {devices.map(d=>(<DeviceCard key={d.id} d={d}/>))}
         </div>
 
-        <SectionTitle icon={AlertTriangle} title="System Suggestions" />
-        <div className="space-y-2">
-          {suggestions.map(s=>(<SuggestionCard key={s.id} s={s} onOpen={openTicket}/>))}
+          <SectionTitle icon={AlertTriangle} title="System Suggestions" />
+          <div className="space-y-2">
+            {suggestions.map(s=>(<SuggestionCard key={s.id} s={s} onOpen={openTicket}/>))}
+          </div>
         </div>
-      </div>
-      <div className="space-y-3">
+        <div className="space-y-3">
         <SectionTitle icon={BookOpen} title="My Trainings" extra={`${trainings.length} trainings pending`} />
         <ScrollArea className="h-56 rounded-md border border-gray-200 p-2 bg-gray-50">
           <div className="space-y-2">
@@ -1744,9 +1835,131 @@ function EndUserPortal(){
         ))}
       </div>
       <div className="self-start w-full">
-        <AssistantsPanel/>
+          <AssistantsPanel/>
+        </div>
       </div>
-    </div>
+
+      {ticketDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6" onClick={closeTicketDialog}>
+          <div
+            className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-xl"
+            onClick={event => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Raise a Support Ticket</h2>
+                <p className="text-xs text-slate-500">Share a few details so the service desk can help quickly.</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                onClick={closeTicketDialog}
+                aria-label="Close ticket dialog"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4 px-5 py-5">
+              {activeSuggestion && (
+                <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                  <div className="font-semibold">Suggested from: {activeSuggestion.title}</div>
+                  <div className="mt-1 text-[11px] leading-relaxed text-blue-700">{activeSuggestion.recommendation}</div>
+                </div>
+              )}
+
+              {ticketError && (
+                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{ticketError}</div>
+              )}
+
+              <form className="space-y-4" onSubmit={handleTicketSubmit}>
+                <div className="space-y-1.5">
+                  <label htmlFor="ticket-subject" className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Subject
+                  </label>
+                  <Input
+                    id="ticket-subject"
+                    value={ticketForm.subject}
+                    onChange={event => setTicketForm(prev => ({ ...prev, subject: event.target.value }))}
+                    placeholder="Brief summary"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label htmlFor="ticket-category" className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Category
+                    </label>
+                    <select
+                      id="ticket-category"
+                      value={ticketForm.category}
+                      onChange={event => setTicketForm(prev => ({ ...prev, category: event.target.value }))}
+                      className="block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    >
+                      {ticketCategories.map(option => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="ticket-priority" className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Priority
+                    </label>
+                    <select
+                      id="ticket-priority"
+                      value={ticketForm.priority}
+                      onChange={event => setTicketForm(prev => ({ ...prev, priority: event.target.value }))}
+                      className="block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    >
+                      {priorityOptions.map(option => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="ticket-details" className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Description
+                  </label>
+                  <textarea
+                    id="ticket-details"
+                    value={ticketForm.details}
+                    onChange={event => setTicketForm(prev => ({ ...prev, details: event.target.value }))}
+                    rows={4}
+                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    placeholder="Add any steps you've tried and the impact you are seeing."
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-slate-300"
+                    onClick={closeTicketDialog}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">
+                    Submit Ticket
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
