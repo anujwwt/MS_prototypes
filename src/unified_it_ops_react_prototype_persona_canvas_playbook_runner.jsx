@@ -1123,7 +1123,13 @@ function SuggestionCard({ s, onOpen }){
       <CardContent className="p-3">
         <div className="flex items-center gap-2 text-sm font-medium text-yellow-800"><AlertTriangle className="w-4 h-4"/>{s.title}</div>
         <div className="text-xs text-yellow-700 mt-1">{s.recommendation}</div>
-        <Button size="sm" className="mt-2" onClick={()=>onOpen(s)}>Open Ticket</Button>
+        <Button
+          size="sm"
+          className="mt-2 bg-red-600 text-white hover:bg-red-500"
+          onClick={()=>onOpen(s)}
+        >
+          Open Ticket
+        </Button>
       </CardContent>
     </Card>
   )
@@ -1137,12 +1143,23 @@ function WorkflowCard({ wf, onTogglePin, onRun, running }){
         <div className="text-xs text-gray-500">{wf.description}</div>
       </div>
       <div className="flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-1">
-        <Button variant="outline" size="sm" className="border-slate-300" disabled={running} onClick={()=>onRun(wf)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-red-300 text-red-600 hover:bg-red-50"
+          disabled={running}
+          onClick={()=>onRun(wf)}
+        >
           {running ? <Loader2 className="w-4 h-4 mr-1 animate-spin"/> : <Play className="w-4 h-4 mr-1"/>}
           {running ? 'Running...' : 'Run'}
         </Button>
-        <Button variant="outline" size="sm" className="border-slate-300" onClick={()=>onTogglePin(wf.key)}>
-          <Pin className={`w-4 h-4 ${wf.pinned ? 'text-blue-600' : 'text-gray-400'}`}/>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-red-300 text-red-600 hover:bg-red-50"
+          onClick={()=>onTogglePin(wf.key)}
+        >
+          <Pin className={`w-4 h-4 ${wf.pinned ? 'text-red-600' : 'text-gray-400'}`}/>
         </Button>
       </div>
     </Card>
@@ -1165,7 +1182,7 @@ function WorkflowRunPanel({ run, log, onDismiss }){
             {run.status === 'completed' ? 'Workflow Completed' : 'Workflow Running'}
           </CardTitle>
           {run.status === 'completed' && (
-            <Button size="sm" variant="ghost" className="text-xs" onClick={onDismiss}>
+            <Button size="sm" variant="ghost" className="text-xs text-red-600 hover:text-red-700" onClick={onDismiss}>
               Dismiss
             </Button>
           )}
@@ -1230,7 +1247,7 @@ function TrainingCard({ t }){
             )}
           </div>
         </div>
-        <Button size="sm" className="bg-black text-white hover:bg-black/80">Start</Button>
+        <Button size="sm" className="bg-red-600 text-white hover:bg-red-500">Start</Button>
       </CardContent>
     </Card>
   )
@@ -1258,8 +1275,25 @@ function PizzaTracker({ ticket, onClose }){
         })}
       </div>
       <div className="mt-2 flex gap-2">
-        <Button size="sm" variant="outline" className="border-slate-300" onClick={()=>setShowDetails(!showDetails)}>{showDetails?"Hide Details":"Details"}</Button>
-        {ticket.timeline.includes("Resolved") && <Button size="sm" variant="outline" className="border-slate-300" onClick={()=>onClose(ticket)}><XCircle className="w-4 h-4 mr-1"/>Close</Button>}
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-red-300 text-red-600 hover:bg-red-50"
+          onClick={()=>setShowDetails(!showDetails)}
+        >
+          {showDetails?"Hide Details":"Details"}
+        </Button>
+        {ticket.timeline.includes("Resolved") && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50"
+            onClick={()=>onClose(ticket)}
+          >
+            <XCircle className="w-4 h-4 mr-1"/>
+            Close
+          </Button>
+        )}
       </div>
       {showDetails && (
         <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-700 space-y-1">
@@ -1272,7 +1306,7 @@ function PizzaTracker({ ticket, onClose }){
   )
 }
 
-function AssistantsPanel({ showGuides = false, runbookTickets = [] }){
+function AssistantsPanel({ showGuides = false, runbookTickets = [], accent = 'blue' }){
   const { tickets } = useMockData()
   const [input, setInput] = useState("")
   const [msgs, setMsgs] = useState([
@@ -1285,6 +1319,16 @@ function AssistantsPanel({ showGuides = false, runbookTickets = [] }){
   const endRef = useRef(null)
   const voiceTimerRef = useRef()
   const [activeRunbookTicketId, setActiveRunbookTicketId] = useState(null)
+  const isRedAccent = accent === 'red'
+  const idlePrimaryButtonClass = isRedAccent
+    ? 'bg-red-600 hover:bg-red-500 text-white'
+    : 'bg-black text-white hover:bg-black/80'
+  const activePrimaryButtonClass = isRedAccent
+    ? 'bg-red-700 hover:bg-red-800 text-white'
+    : 'bg-green-600 text-white hover:bg-green-700'
+  const actionButtonClass = isRedAccent
+    ? 'bg-red-600 hover:bg-red-500 text-white'
+    : 'bg-black text-white hover:bg-black/80'
   const resolutionTickets = useMemo(() => {
     if (!showGuides) return []
     const priorityRank = { P1: 1, P2: 2, P3: 3, P4: 4 }
@@ -1446,7 +1490,7 @@ function AssistantsPanel({ showGuides = false, runbookTickets = [] }){
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
-              className={`text-white ${isConnected || isRouting ? 'bg-green-600 hover:bg-green-700' : 'bg-black hover:bg-black/80'}`}
+              className={(isConnected || isRouting) ? activePrimaryButtonClass : idlePrimaryButtonClass}
               onClick={connectVoice}
             >
               <Mic className="w-4 h-4 mr-1"/>
@@ -1595,7 +1639,7 @@ function AssistantsPanel({ showGuides = false, runbookTickets = [] }){
             />
             <Button
               onClick={send}
-              className="bg-black text-white hover:bg-black/80"
+              className={actionButtonClass}
               disabled={showGuides}
             >
               Send
@@ -1744,7 +1788,7 @@ function EndUserPortal(){
         ))}
       </div>
       <div className="self-start w-full">
-        <AssistantsPanel/>
+        <AssistantsPanel accent="red"/>
       </div>
     </div>
   )
@@ -2484,7 +2528,11 @@ function AgentPortal(){
       </div>
 
       <div className="self-start w-full">
-        <AssistantsPanel showGuides runbookTickets={resolutionTicketsForAmelia}/>
+        <AssistantsPanel
+          showGuides
+          runbookTickets={resolutionTicketsForAmelia}
+          accent={activePersona === 'endUser' ? 'red' : 'blue'}
+        />
       </div>
     </div>
   )
@@ -2524,6 +2572,13 @@ export default function App(){
 
   const shortcutsTitle = activePersona === 'endUser' ? 'Daily Portals' : 'Agent Shortcuts'
   const shortcutsLinks = activePersona === 'endUser' ? endUserLinks : agentLinks
+  const isEndUserActive = activePersona === 'endUser'
+  const shortcutButtonClass = isEndUserActive
+    ? 'border-red-200 bg-white hover:bg-red-50 text-red-700 gap-2'
+    : 'border-slate-200 bg-white hover:bg-blue-50 text-gray-700 gap-2'
+  const settingsButtonClass = isEndUserActive
+    ? 'gap-2 border-red-300 text-red-600 hover:bg-red-50'
+    : 'gap-2 border-slate-300'
 
   return (
     <div className="min-h-screen bg-slate-50 text-gray-900 px-6 py-12 flex flex-col items-center gap-4">
@@ -2534,7 +2589,13 @@ export default function App(){
               key={tab.key}
               type="button"
               onClick={() => setActivePersona(tab.key)}
-              className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${activePersona === tab.key ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-blue-600'}`}
+              className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${activePersona === tab.key
+                ? tab.key === 'endUser'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'bg-blue-600 text-white shadow-sm'
+                : tab.key === 'endUser'
+                  ? 'text-slate-600 hover:text-red-600'
+                  : 'text-slate-600 hover:text-blue-600'}`}
             >
               {tab.label}
             </button>
@@ -2554,7 +2615,7 @@ export default function App(){
                 <div className="text-xs text-gray-500">DOJ: {user.doj} · Tenure: {tenureLabel}</div>
               </div>
             </div>
-            <Button variant="outline" className="gap-2 border-slate-300"><Settings className="w-4 h-4"/>Settings</Button>
+            <Button variant="outline" className={settingsButtonClass}><Settings className="w-4 h-4"/>Settings</Button>
           </div>
           <div className="px-6 pb-6 space-y-4 bg-slate-50/50">
             <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm">
@@ -2568,7 +2629,7 @@ export default function App(){
                         asChild
                         variant="outline"
                         size="sm"
-                        className="border-slate-200 bg-white hover:bg-blue-50 text-gray-700 gap-2"
+                        className={shortcutButtonClass}
                       >
                         <a href={link.href} target="_blank" rel="noopener noreferrer">
                           <Icon className="w-4 h-4"/>
