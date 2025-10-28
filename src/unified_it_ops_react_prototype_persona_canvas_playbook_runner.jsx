@@ -2506,10 +2506,10 @@ export default function App(){
   ]
 
   const endUserLinks = [
-    { label: 'Payroll', icon: Wallet, href: '#' },
-    { label: 'Timesheet', icon: ClipboardList, href: '#' },
-    { label: 'PTO Requests', icon: Plane, href: '#' },
-    { label: 'Holiday Calendar', icon: CalendarDays, href: '#' }
+    { label: 'Payroll', icon: Wallet, href: '#', description: 'Review pay statements, tax forms, and direct deposit details.' },
+    { label: 'Timesheet', icon: ClipboardList, href: '#', description: 'Submit and approve weekly timesheets for your team.' },
+    { label: 'PTO Requests', icon: Plane, href: '#', description: 'Request vacation, track balances, and view approvals.' },
+    { label: 'Holiday Calendar', icon: CalendarDays, href: '#', description: 'Check upcoming company holidays and office closures.' }
   ]
 
   const agentLinks = [
@@ -2563,18 +2563,24 @@ export default function App(){
                 {shortcutsLinks.map(link => {
                   const Icon = link.icon
                   return (
-                    <Button
-                      key={link.label}
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-200 bg-white hover:bg-blue-50 text-gray-700 gap-2"
-                    >
-                      <a href={link.href} target="_blank" rel="noopener noreferrer">
-                        <Icon className="w-4 h-4"/>
-                        {link.label}
-                      </a>
-                    </Button>
+                    <div key={link.label} className="relative group">
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="border-slate-200 bg-white hover:bg-blue-50 text-gray-700 gap-2"
+                      >
+                        <a href={link.href} target="_blank" rel="noopener noreferrer">
+                          <Icon className="w-4 h-4"/>
+                          {link.label}
+                        </a>
+                      </Button>
+                      {link.description && (
+                        <div className="pointer-events-none absolute left-1/2 top-full z-10 hidden w-52 -translate-x-1/2 translate-y-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-lg group-hover:flex group-focus-within:flex">
+                          {link.description}
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
